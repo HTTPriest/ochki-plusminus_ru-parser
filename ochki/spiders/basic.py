@@ -79,7 +79,30 @@ class BasicSpider(scrapy.Spider):
             self.log('LOGIN HAS FAILED')
         else:
             self.log('LOGIN SUCCESSFUL')
+            menu = response.xpath('//ul[@id="menu-vertical-list"]')
 
+            for option in menu.xpath('./li[not(contains(@class,"hidden-md hidden-lg"))]'):
+                #self.log(link.extract())
+                link = option.xpath('./a/@href').extract()
+                self.log(link)
+                yield SplashRequest(response.urljoin(link),
+                                    callback=self.parse_item,
+                                    endpoint='render.html',
+                                    args={
+                                        'wait': 1,
+                                    })
+
+    def parse_item(self, response):
+        name = scrapy.Field()
+        model = scrapy.Field()
+        manufacturer = scrapy.Field()
+        is_available = scrapy.Field()
+        price = scrapy.Field()
+        description = scrapy.Field()
+        reviews = scrapy.Field()
+        category = scrapy.Field()
+
+        pass
 
 
 
