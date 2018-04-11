@@ -3,6 +3,10 @@ import scrapy
 import base64
 from scrapy_splash import SplashRequest, SplashFormRequest
 from time import time
+from ochki.items import OchkiItem
+from urllib.parse import urljoin, urlparse
+from functools import reduce
+from unicodedata import normalize
 
 
 class BasicSpider(scrapy.Spider):
@@ -81,27 +85,55 @@ class BasicSpider(scrapy.Spider):
             self.log('LOGIN SUCCESSFUL')
             menu = response.xpath('//ul[@id="menu-vertical-list"]')
 
-            for option in menu.xpath('./li[not(contains(@class,"hidden-md hidden-lg"))]'):
-                #self.log(link.extract())
-                link = option.xpath('./a/@href').extract()
+            #   parsing depth limit
+            for option in menu.xpath('./li[not(contains(@class,"hidden-md hidden-lg"))]')[:2]:
+                link = option.xpath('./a/@href').extract()[0]
+
                 self.log(link)
-                yield SplashRequest(response.urljoin(link),
-                                    callback=self.parse_item,
-                                    endpoint='render.html',
+                yield SplashRequest(urljoin('http://ochki-plusminus.ru', link),
+                                    callback=self.parse_category,
+                                    endpoint='execute',
+                                    method='GET',
                                     args={
                                         'wait': 1,
+                                        'lua_source': self.lua_script,
                                     })
 
-    def parse_item(self, response):
-        name = scrapy.Field()
-        model = scrapy.Field()
-        manufacturer = scrapy.Field()
-        is_available = scrapy.Field()
-        price = scrapy.Field()
-        description = scrapy.Field()
-        reviews = scrapy.Field()
-        category = scrapy.Field()
+    def parse_category(self, response):
+        links = response.xpath('//h4/a/@href')
+        for link in links:
+            link = link.extract()
+            self.log('Link from category : %s' % link)
+            yield SplashRequest(link,
+                                callback=self.parse_item,
+                                endpoint='execute',
+                                method='GET',
+                                args={
+                                    'wait': 2,
+                                    'lua_source': self.lua_script,
+                                })
 
+
+    def parse_item(self, response):
+
+        image = response.xpath('//a[@class="thumbnail"]/@href')
+        prod = response.xpath('//div[@id="product"]')
+        price = './/h2span[@class=contains(., "autocalc-product-price") or contains(., "autocalc-product-special")]/text()'
+        description = response.xpath('string(//div[@id="tab-description"])').extract()
+        desc = reduce(lambda x, y: x + y, description)
+
+        product = OchkiItem()
+        product['url'] = response.url
+        product['name'] = response.xpath('//h1/text()').extract()
+        product['model'] = prod.xpath('.//span[text()[contains(., "Модель")]]/text()').extract()
+        product['manufacturer'] = response.xpath('//*[text()[contains(., "Производитель")]]/a/text()').extract()
+        product['is_available'] = response.xpath('//li[text()[contains(., "Наличие")]]/span/text()').extract()
+        product['price'] = [i.split(' ')[0] for i in response.xpath('//i[@class="fa fa-rub"]/parent::span/text()').extract()]
+        product['description'] = desc.replace(u'\xa0', ' ').replace(u'\n', '').replace('  ', ' ')
+        #product['reviews'] =
+        product['category'] = urlparse(response.url).path.split(sep='/')[1]
+        self.log(product)
+        yield product
         pass
 
 

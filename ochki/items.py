@@ -11,11 +11,13 @@ import scrapy
 class OchkiItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
+    url = scrapy.Field()
     name = scrapy.Field()
     model = scrapy.Field()
     manufacturer = scrapy.Field()
     is_available = scrapy.Field()
     price = scrapy.Field()
+    price_old = scrapy.Field()
     description = scrapy.Field()
     reviews = scrapy.Field()
     category = scrapy.Field()
