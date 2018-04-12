@@ -86,7 +86,7 @@ class BasicSpider(scrapy.Spider):
             menu = response.xpath('//ul[@id="menu-vertical-list"]')
 
             #   parsing depth limit
-            for option in menu.xpath('./li[not(contains(@class,"hidden-md hidden-lg"))]')[:2]:
+            for option in menu.xpath('./li[not(contains(@class,"hidden-md hidden-lg"))]'):
                 link = option.xpath('./a/@href').extract()[0]
 
                 self.log(link)
@@ -133,7 +133,7 @@ class BasicSpider(scrapy.Spider):
         image = response.xpath('//a[@class="thumbnail"]/@href')
         prod = response.xpath('//div[@id="product"]')
         price = './/h2span[@class=contains(., "autocalc-product-price") or contains(., "autocalc-product-special")]/text()'
-        description = response.xpath('string(//div[@id="tab-description"])').extract()
+        description = response.xpath('string(//div[@id="tab-description"]/*[not(self::style)])').extract()
         desc = reduce(lambda x, y: x + y, description)
 
         product = OchkiItem()
