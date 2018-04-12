@@ -113,4 +113,15 @@ HTTPCACHE_STORAGE = 'scrapy_splash.SplashAwareFSCacheStorage'
 
 #ROTATING_PROXY_LIST_PATH = 'proxy.txt'
 
+ITEM_PIPELINES = {
+    'scrapy.pipelines.images.ImagesPipeline': 1,
+    'ochki.pipelines.ImagePathPipeline': 3,
+    }
+
+IMAGES_STORE = '/home/datapriest/Project/ochki/images'
+
+FEED_EXPORTERS = {
+    'csv': 'ochki.exporters.QuoteAllCsvItemExporter',
+}
+
 

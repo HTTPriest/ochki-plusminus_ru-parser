@@ -100,6 +100,7 @@ class BasicSpider(scrapy.Spider):
                                     })
 
     def parse_category(self, response):
+        #   yield items
         links = response.xpath('//h4/a/@href')
         for link in links:
             link = link.extract()
@@ -112,6 +113,19 @@ class BasicSpider(scrapy.Spider):
                                     'wait': 2,
                                     'lua_source': self.lua_script,
                                 })
+        #   pagination
+        next_url = response.xpath('//ul[@class="pagination"]/li[@class="active"]/following-sibling::li/a/@href').extract()[0]
+        self.log('Next sibling::: ')
+        self.log(next_url)
+        yield SplashRequest(next_url,
+                            callback=self.parse_category,
+                            endpoint='execute',
+                            method='GET',
+                            args={
+                                'wait': 2,
+                                'lua_source': self.lua_script,
+                            })
+
 
 
     def parse_item(self, response):
@@ -132,9 +146,10 @@ class BasicSpider(scrapy.Spider):
         product['description'] = desc.replace(u'\xa0', ' ').replace(u'\n', '').replace('  ', ' ')
         #product['reviews'] =
         product['category'] = urlparse(response.url).path.split(sep='/')[1]
+        #   send image url to pipeline
+        product['image_urls'] = response.xpath('//a[@class="thumbnail"]/@href').extract()
         self.log(product)
         yield product
         pass
-
 
 

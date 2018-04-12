@@ -21,4 +21,6 @@ class OchkiItem(scrapy.Item):
     description = scrapy.Field()
     reviews = scrapy.Field()
     category = scrapy.Field()
+    image_urls = scrapy.Field()
+    images = scrapy.Field()
     pass
