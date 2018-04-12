@@ -133,7 +133,7 @@ class BasicSpider(scrapy.Spider):
         image = response.xpath('//a[@class="thumbnail"]/@href')
         prod = response.xpath('//div[@id="product"]')
         price = './/h2span[@class=contains(., "autocalc-product-price") or contains(., "autocalc-product-special")]/text()'
-        description = response.xpath('string(//div[@id="tab-description"]/*[not(self::style)])').extract()
+        description = response.xpath('string(//div[@id="tab-description"]//*[not(self::style)])').extract()
         desc = reduce(lambda x, y: x + y, description)
 
         product = OchkiItem()
@@ -142,7 +142,7 @@ class BasicSpider(scrapy.Spider):
         product['model'] = prod.xpath('.//span[text()[contains(., "Модель")]]/text()').extract()
         product['manufacturer'] = response.xpath('//*[text()[contains(., "Производитель")]]/a/text()').extract()
         product['is_available'] = response.xpath('//li[text()[contains(., "Наличие")]]/span/text()').extract()
-        product['price'] = [i.split(' ')[0] for i in response.xpath('//i[@class="fa fa-rub"]/parent::span/text()').extract()]
+        product['price'] = [i.split(' ')[0] for i in response.xpath('//i[@class="fa fa-rub"]/ancestor::h2/span/text()').extract()][0]
         product['description'] = desc.replace(u'\xa0', ' ').replace(u'\n', '').replace('  ', ' ')
         #product['reviews'] =
         product['category'] = urlparse(response.url).path.split(sep='/')[1]
@@ -150,6 +150,5 @@ class BasicSpider(scrapy.Spider):
         product['image_urls'] = response.xpath('//a[@class="thumbnail"]/@href').extract()
         self.log(product)
         yield product
-        pass
 
 
